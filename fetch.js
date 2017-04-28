@@ -1,10 +1,6 @@
 (function(self) {
   'use strict';
 
-  if (self.fetch) {
-    return
-  }
-
   var support = {
     searchParams: 'URLSearchParams' in self,
     iterable: 'Symbol' in self && 'iterator' in Symbol,
@@ -358,10 +354,7 @@
 
   function parseHeaders(rawHeaders) {
     var headers = new Headers()
-    // Replace instances of \r\n and \n followed by at least one space or horizontal tab with a space
-    // https://tools.ietf.org/html/rfc7230#section-3.2
-    var preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, ' ')
-    preProcessedHeaders.split(/\r?\n/).forEach(function(line) {
+    rawHeaders.split(/\r?\n/).forEach(function(line) {
       var parts = line.split(':')
       var key = parts.shift().trim()
       if (key) {
@@ -419,7 +412,7 @@
   self.Request = Request
   self.Response = Response
 
-  self.fetch = function(input, init) {
+  var fetch = function(input, init) {
     return new Promise(function(resolve, reject) {
       var request = new Request(input, init)
       var xhr = new XMLHttpRequest()
@@ -460,5 +453,13 @@
       xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit)
     })
   }
-  self.fetch.polyfill = true
-})(typeof self !== 'undefined' ? self : this);
+
+  fetch.polyfill = true
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = fetch;
+  } else if (!root.Promise) {
+    self.fetch = fetch;
+  }
+
+})(this);
